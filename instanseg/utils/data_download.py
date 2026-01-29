@@ -1476,7 +1476,6 @@ def load_HPA_Segmentation(Segmentation_Dataset: dict, verbose: bool = True) -> d
             zip_ref.extractall(hpa_dir / 'HPA')
         if verbose:
             print("Unzipping completed.")
-        output_dir.mkdir(parents=True, exist_ok=True)
     
     # Traverse through each sample directory in the test folder
     test_dir = hpa_dir / "HPA/hpa_dataset_v2" / "test"
