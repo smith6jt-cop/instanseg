@@ -357,7 +357,7 @@ if __name__ == "__main__":
 
     #         import tifffile
     #         print("Saving to", outpath)
-    #         tifffile.imsave(outpath, pred)
+    #         tifffile.imwrite(outpath, pred)
 
 
     pd.DataFrame(time_dict['combined']).to_csv(output_path / "timing_dict.csv", header=True)
