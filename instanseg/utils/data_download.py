@@ -1696,7 +1696,7 @@ def livecell_ann_to_masks(img_dir, annotation_file):
  
     from glob import glob
  
-    from tifffile import imsave
+    from tifffile import imwrite
     img_dir_classes = glob(img_dir + '*/')
     classes = [img_dir_class.split(os.sep)[-2] for img_dir_class in img_dir_classes]
     #print(classes)
@@ -1728,7 +1728,7 @@ def livecell_ann_to_masks(img_dir, annotation_file):
                   #  show_images(masks,labels = [0])
                     masks = masks.astype(np.uint16)
                     maskname = os.path.splitext(filename)[0] + '_masks.tif'
-                    imsave(maskname, masks)
+                    imwrite(maskname, masks)
                    # print(f'saved masks at {maskname}')
 #end of cellpose code ######
  
