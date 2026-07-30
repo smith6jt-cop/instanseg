@@ -24,14 +24,16 @@ class InstanSeg():
                  model_type: Union[str,nn.Module] = "brightfield_nuclei", 
                  device: Optional[str] = None, 
                  image_reader: str = "auto",
-                 verbosity: int = 1 #0,1,2
+                 verbosity: int = 1, #0,1,2
+                 channels_last: bool = True,
                  ):
-        
+
         """
         :param model_type: The type of model to use. If a string is provided, the model will be downloaded. If the model is not public, it will look for a model in your bioimageio folder. If an nn.Module is provided, this model will be used.
         :param device: The device to run the model on. If None, the device will be chosen automatically.
         :param image_reader: The image reader to use. Options are "auto", "tiffslide", "skimage.io", "bioio", "AICSImageIO". If "auto", will use the first available reader.
         :param verbosity: The verbosity level. 0 is silent, 1 is normal, 2 is verbose.
+        :param channels_last: On CUDA, run the model in channels_last (NHWC) memory format for faster convolution/batch-norm. Ignored on non-CUDA devices. Set to False for bit-for-bit reproducibility with the channels-first path.
         """
         from instanseg.utils.utils import download_model, _choose_device
 
@@ -42,8 +44,19 @@ class InstanSeg():
             self.instanseg = model_type
         else:
             self.instanseg = download_model(model_type, verbose = self.verbose)
+
         self.inference_device = _choose_device(device, verbose= self.verbose)
         self.instanseg = self.instanseg.to(self.inference_device)
+
+        if channels_last and str(self.inference_device).startswith("cuda"):
+            # On CUDA, running the convolutional backbone in channels_last lets
+            # cuDNN use its native NHWC conv/batch-norm kernels and skip the NCHW
+            # <-> NHWC feature-map reshuffles it otherwise inserts around each
+            # convolution, giving markedly faster inference on modern GPUs.
+            # cuDNN kernel selection shifts floating-point rounding very slightly,
+            # so pass channels_last=False when bit-for-bit reproducibility with
+            # the channels-first path is required.
+            self.instanseg = self.instanseg.to(memory_format=torch.channels_last)
 
         self.prefered_image_reader = self._resolve_image_reader(image_reader)
         self.small_image_threshold = 3 * 1500 * 1500 #max number of image pixels to be processed on GPU.
